@@ -89,7 +89,7 @@ One card is placed face-down beneath the Hatching Ground and revealed after 5 tu
 
 - 👁️ A rider may not fold while their dragon is physically present and watching. The dragon's pride is at stake.
 - 🍷 If a green rider wins a Gold Flight pot, tradition demands they buy Benden wine for the whole table.
-- ⚖️ All disputes are settled by the senior Weyrwoman's rider, whose ruling is final and binding.
+- ⚖️ All disputes are settled by the senior Weyrwoman, whose ruling is final and binding.
 
 ---
 
