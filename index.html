@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Poker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #1E1409;
+    --sepia:     #5A4830;
+    --faded:     #8B7550;
+    --parchment: #FAF4E6;
+    --warm:      #F0E8D0;
+    --border:    rgba(120,90,40,0.2);
+    --border-mid:rgba(120,90,40,0.38);
+    --gold-bg:   #FDF2DC; --gold-c: #7A5518; --gold-b: #C8A020;
+    --bronze-bg: #F5E8D8; --bronze-c:#6B4420; --bronze-b:#A06830;
+    --brown-bg:  #EDE0D0; --brown-c: #5A3418; --brown-b: #8B5A30;
+    --blue-bg:   #DCE8F5; --blue-c:  #1A3C6E; --blue-b:  #3060A8;
+    --green-bg:  #DCF0E0; --green-c: #1A4C28; --green-b: #2E7840;
+  }
+
+  html, body {
+    min-height: 100vh;
+    background: #2A1F0E;
+    font-family: 'Crimson Pro', Georgia, serif;
+    color: var(--ink);
+  }
+
+  /* ── BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(180,120,40,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(100,60,20,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 1.5rem; }
+  .screen.active { display: flex; }
+  .screen.top { align-items: flex-start; padding-top: 2rem; }
+
+  /* ── CARD (UI panel) ── */
+  .panel {
+    background: var(--parchment);
+    border: 1px solid var(--border-mid);
+    box-shadow: 0 8px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.6);
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  /* ── MASTHEAD ── */
+  .masthead { text-align: center; margin-bottom: 2rem; }
+  .dragon-rule { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 0.5rem; }
+  .rule-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--border-mid), transparent); }
+  .flame { font-size: 18px; color: var(--faded); }
+  h1 { font-family: 'Cinzel', serif; font-size: 32px; font-weight: 700; letter-spacing: 0.08em; color: var(--ink); line-height: 1.1; }
+  .tagline { font-style: italic; font-size: 14px; color: var(--sepia); margin-top: 4px; }
+
+  /* ── SECTION LABEL ── */
+  .slabel {
+    font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--sepia);
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .slabel::after { content: ''; flex: 1; height: 0.5px; background: var(--border-mid); }
+
+  /* ── INPUTS ── */
+  .field { margin-bottom: 1.25rem; }
+  .field label { display: block; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sepia); margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 10px 14px;
+    background: var(--warm); border: 0.5px solid var(--border-mid);
+    font-family: 'Crimson Pro', serif; font-size: 16px; color: var(--ink);
+    outline: none; transition: border-color .15s;
+  }
+  .field input:focus { border-color: var(--gold-b); }
+  .field input::placeholder { color: var(--faded); font-style: italic; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em;
+    padding: 11px 24px; border: 0.5px solid var(--border-mid);
+    background: transparent; color: var(--ink); cursor: pointer;
+    transition: background .15s, transform .1s; width: 100%; margin-bottom: 8px;
+  }
+  .btn:hover { background: var(--warm); }
+  .btn:active { transform: scale(.98); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn.primary { background: var(--ink); color: var(--parchment); border-color: var(--ink); }
+  .btn.primary:hover { background: var(--sepia); border-color: var(--sepia); }
+  .btn.gold { background: var(--gold-bg); color: var(--gold-c); border-color: var(--gold-b); }
+  .btn.gold:hover { background: #f5e8c0; }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { margin-bottom: 0; }
+
+  /* ── ROOM CODE ── */
+  .room-code-display {
+    text-align: center; padding: 1.5rem;
+    background: var(--warm); border: 0.5px solid var(--border-mid);
+    margin-bottom: 1.5rem;
+  }
+  .room-code-display .code {
+    font-family: 'Cinzel', serif; font-size: 48px; font-weight: 700;
+    letter-spacing: 0.2em; color: var(--ink); line-height: 1;
+  }
+  .room-code-display .code-label {
+    font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--faded); margin-top: 6px;
+  }
+
+  /* ── PLAYER LIST ── */
+  .player-list { list-style: none; margin-bottom: 1.5rem; }
+  .player-list li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-bottom: 0.5px solid var(--border);
+    font-size: 15px; color: var(--sepia);
+  }
+  .player-list li:last-child { border-bottom: none; }
+  .player-list li i { color: var(--faded); font-size: 14px; }
+  .player-list li.host-tag::after { content: 'host'; font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faded); margin-left: auto; }
+  .player-list li .ready-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-mid); margin-left: auto; flex-shrink: 0; }
+  .player-list li .ready-dot.on { background: #2E7840; }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    background: var(--warm); border: 0.5px solid var(--border);
+    padding: 10px 14px; margin-bottom: 1.25rem;
+    font-size: 13px; color: var(--sepia); font-style: italic;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .status-bar i { color: var(--faded); flex-shrink: 0; }
+
+  /* ── GAME LAYOUT ── */
+  .game-wrap { width: 100%; max-width: 720px; }
+
+  .game-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .game-header h2 { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--parchment); }
+  .game-header .room-pill {
+    font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.12em;
+    color: rgba(250,244,230,0.6); background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.12); padding: 4px 12px;
+  }
+
+  .game-panel {
+    background: var(--parchment);
+    border: 1px solid var(--border-mid);
+    box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  /* ── PLAYING CARDS ── */
+  .cards-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pcard {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 60px; min-height: 84px; border-radius: 4px; border: 1px solid;
+    padding: 5px 3px; font-family: 'Cinzel', serif; cursor: default;
+    transition: transform .15s;
+  }
+  .pcard.selectable { cursor: pointer; outline: 2px dashed var(--gold-b); outline-offset: 3px; }
+  .pcard.selectable:hover { transform: translateY(-5px); }
+  .pcard-val { font-size: 17px; font-weight: 700; line-height: 1; margin-bottom: 2px; }
+  .pcard-suit { font-size: 9px; letter-spacing: .06em; line-height: 1.3; text-align: center; }
+  .pcard-face { font-size: 9px; font-weight: 600; text-align: center; line-height: 1.3; }
+  .c-gold   { background: var(--gold-bg);   color: var(--gold-c);   border-color: var(--gold-b); }
+  .c-bronze { background: var(--bronze-bg); color: var(--bronze-c); border-color: var(--bronze-b); }
+  .c-brown  { background: var(--brown-bg);  color: var(--brown-c);  border-color: var(--brown-b); }
+  .c-blue   { background: var(--blue-bg);   color: var(--blue-c);   border-color: var(--blue-b); }
+  .c-green  { background: var(--green-bg);  color: var(--green-c);  border-color: var(--green-b); }
+  .c-wild   { background: #F5F0E8; color: #6B5A40; border-color: #8B7550; border-style: dashed; }
+  .c-back   { background: var(--ink); color: var(--parchment); border-color: #3A2A10; }
+
+  /* ── HAND EVAL ── */
+  .hand-eval { margin-bottom: 1rem; }
+  .hand-eval .hand-name { font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700; color: var(--ink); }
+  .hand-eval .hand-rank { font-size: 12px; color: var(--faded); font-style: italic; font-family: 'Cinzel', serif; }
+
+  /* ── SPECIAL NOTES ── */
+  .special-note {
+    background: var(--warm); border: 0.5px solid var(--border);
+    padding: 8px 12px; font-size: 12px; color: var(--sepia);
+    font-style: italic; display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px;
+  }
+  .special-note i { color: var(--faded); flex-shrink: 0; }
+
+  /* ── DIVIDER ── */
+  .hdivider { height: 0.5px; background: var(--border); margin: 1rem 0; }
+
+  /* ── DRAW SECTION ── */
+  .draw-prompt { font-size: 13px; color: var(--sepia); font-style: italic; margin-top: 8px; }
+
+  /* ── OUTCOME ── */
+  .outcome { border-radius: 0; padding: 10px 14px; font-size: 13px; line-height: 1.6; margin-top: 1rem; }
+  .outcome-double     { background: var(--gold-bg);   color: var(--gold-c);   border: 0.5px solid var(--gold-b); }
+  .outcome-challenge  { background: var(--blue-bg);   color: var(--blue-c);   border: 0.5px solid var(--blue-b); }
+  .outcome-goldflight { background: var(--brown-bg);  color: var(--brown-c);  border: 0.5px solid var(--brown-b); }
+  .outcome-none       { background: var(--warm); color: var(--sepia); border: 0.5px solid var(--border); font-style: italic; }
+  .outcome-label { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: .08em; display: block; margin-bottom: 3px; font-style: normal; }
+
+  /* ── REVEAL TABLE ── */
+  .reveal-player { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 0.5px solid var(--border); }
+  .reveal-player:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .reveal-player-name { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sepia); margin-bottom: 6px; }
+  .reveal-hand-name { font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700; color: var(--ink); }
+  .reveal-hand-rank { font-size: 11px; color: var(--faded); font-style: italic; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--ink); color: var(--parchment);
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.08em;
+    padding: 10px 24px; border: 0.5px solid var(--border-mid);
+    transition: transform .3s; z-index: 100; white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 560px) {
+    .panel { padding: 1.75rem 1.25rem; }
+    h1 { font-size: 26px; }
+    .room-code-display .code { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ SCREEN: LOBBY ══ -->
+<div class="screen active" id="screenLobby">
+  <div class="panel">
+    <div class="masthead">
+      <div class="dragon-rule"><div class="rule-line"></div><i class="ti ti-flame flame"></i><i class="ti ti-flame flame"></i><i class="ti ti-flame flame"></i><div class="rule-line"></div></div>
+      <h1>Dragon Poker</h1>
+      <p class="tagline">A game of wits, weyrs, and draconic hierarchy</p>
+    </div>
+
+    <div class="field">
+      <label>Your name</label>
+      <input type="text" id="playerName" placeholder="Rider name or alias..." maxlength="24">
+    </div>
+
+    <button class="btn primary" id="btnCreate"><i class="ti ti-plus" style="margin-right:6px;"></i>Create new game</button>
+
+    <div style="text-align:center;font-size:12px;color:var(--faded);font-style:italic;margin:8px 0;">— or —</div>
+
+    <div class="field" style="margin-bottom:8px;">
+      <label>Room code</label>
+      <input type="text" id="joinCode" placeholder="4-letter code..." maxlength="4" style="text-transform:uppercase;letter-spacing:0.2em;font-family:'Cinzel',serif;font-size:20px;">
+    </div>
+    <button class="btn" id="btnJoin"><i class="ti ti-door-enter" style="margin-right:6px;"></i>Join game</button>
+
+    <div id="lobbyError" style="font-size:12px;color:#8B2020;font-style:italic;margin-top:8px;display:none;"></div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: WAITING ROOM ══ -->
+<div class="screen" id="screenWaiting">
+  <div class="panel">
+    <div class="masthead">
+      <div class="dragon-rule"><div class="rule-line"></div><i class="ti ti-flame flame"></i><i class="ti ti-flame flame"></i><i class="ti ti-flame flame"></i><div class="rule-line"></div></div>
+      <h1>Dragon Poker</h1>
+    </div>
+
+    <div class="room-code-display">
+      <div class="code" id="displayRoomCode">----</div>
+      <div class="code-label">Share this code with other players</div>
+    </div>
+
+    <div class="slabel">Players</div>
+    <ul class="player-list" id="waitingPlayerList"></ul>
+
+    <div class="status-bar" id="waitingStatus">
+      <i class="ti ti-hourglass"></i>
+      <span>Waiting for players to join...</span>
+    </div>
+
+    <button class="btn primary" id="btnDeal" disabled><i class="ti ti-cards" style="margin-right:6px;"></i>Deal hands</button>
+    <button class="btn" id="btnLeaveWaiting"><i class="ti ti-door-exit" style="margin-right:6px;"></i>Leave game</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: GAME ══ -->
+<div class="screen top" id="screenGame">
+  <div class="game-wrap">
+
+    <div class="game-header">
+      <h2>Dragon Poker</h2>
+      <div class="room-pill" id="gameRoomPill">Room: ----</div>
+    </div>
+
+    <!-- Players status -->
+    <div class="game-panel" id="panelPlayers">
+      <div class="slabel">Players</div>
+      <ul class="player-list" id="gamePlayers"></ul>
+    </div>
+
+    <!-- Hatching Ground -->
+    <div class="game-panel" id="panelHG" style="display:none;">
+      <div class="slabel">Hatching Ground</div>
+      <div class="cards-row" id="hgCards"></div>
+      <p style="font-size:11px;color:var(--faded);font-style:italic;margin-top:8px;">Communal cards — available to all players.</p>
+    </div>
+
+    <!-- Clutch card result -->
+    <div class="game-panel" id="panelClutch" style="display:none;">
+      <div class="slabel">Clutch Card</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:1rem;">
+        <div class="pcard" id="clutchCard" style="width:56px;min-height:76px;"></div>
+        <div>
+          <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--ink);" id="clutchCardName"></div>
+          <div style="font-size:12px;color:var(--sepia);font-style:italic;" id="clutchCardSub"></div>
+        </div>
+      </div>
+      <div class="outcome" id="clutchOutcome"></div>
+    </div>
+
+    <!-- Reveal results -->
+    <div class="game-panel" id="panelReveal" style="display:none;">
+      <div class="slabel">All hands revealed</div>
+      <div id="revealList"></div>
+    </div>
+
+    <!-- My hand -->
+    <div class="game-panel" id="panelHand" style="display:none;">
+      <div class="hand-eval">
+        <div class="hand-name" id="myHandName">-</div>
+        <div class="hand-rank" id="myHandRank">-</div>
+      </div>
+      <div class="slabel">Your hand</div>
+      <div class="cards-row" id="myCards"></div>
+      <div id="mySpecials"></div>
+    </div>
+
+    <!-- Draw section -->
+    <div class="game-panel" id="panelDraw" style="display:none;">
+      <div class="slabel">Drawn card</div>
+      <div class="cards-row" id="drawnCard"></div>
+      <div id="drawPrompt" class="draw-prompt"></div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="game-panel" id="panelActions" style="display:none;">
+      <div class="slabel">Actions</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <button class="btn" id="btnDrawCard" style="flex:1;min-width:140px;"><i class="ti ti-plus" style="margin-right:6px;"></i>Draw single card</button>
+        <button class="btn" id="btnRevealHG" style="flex:1;min-width:140px;display:none;"><i class="ti ti-layout-grid" style="margin-right:6px;"></i>Reveal Hatching Ground</button>
+        <button class="btn gold" id="btnRevealHand" style="flex:1;min-width:140px;"><i class="ti ti-eye" style="margin-right:6px;"></i>Reveal my hand</button>
+        <button class="btn" id="btnRevealClutch" style="flex:1;min-width:140px;display:none;"><i class="ti ti-eye-off" style="margin-right:6px;"></i>Reveal clutch card</button>
+        <button class="btn" id="btnNewGame" style="flex:1;min-width:140px;display:none;"><i class="ti ti-refresh" style="margin-right:6px;"></i>New round</button>
+        <button class="btn" id="btnLeaveGame" style="flex:1;min-width:140px;"><i class="ti ti-door-exit" style="margin-right:6px;"></i>Leave</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// ── FIREBASE CONFIG ──
+firebase.initializeApp({
+  apiKey: "AIzaSyDr4QL1OLoVCkS2FyLKteR0Ot9rYe43JM8",
+  authDomain: "dragon-poker-77d46.firebaseapp.com",
+  databaseURL: "https://dragon-poker-77d46-default-rtdb.firebaseio.com",
+  projectId: "dragon-poker-77d46",
+  storageBucket: "dragon-poker-77d46.firebasestorage.app",
+  messagingSenderId: "276341179054",
+  appId: "1:276341179054:web:cdabd98c56ced3a20c633f"
+});
+const db = firebase.database();
+
+// ── CARD ENGINE ──
+const SUITS = [
+  { id:'gold',   label:'G',  name:'Gold',   cls:'c-gold' },
+  { id:'bronze', label:'Br', name:'Bronze', cls:'c-bronze' },
+  { id:'brown',  label:'Bw', name:'Brown',  cls:'c-brown' },
+  { id:'blue',   label:'Bl', name:'Blue',   cls:'c-blue' },
+  { id:'green',  label:'Gn', name:'Green',  cls:'c-green' }
+];
+const FACES = [
+  { value:'Weyrwoman',  short:'WW', sortVal:11 },
+  { value:'Weyrleader', short:'WL', sortVal:12 },
+  { value:'Weyrsecond', short:'W2', sortVal:13 }
+];
+
+function buildDeck() {
+  var d = [], s, n, f;
+  for (s = 0; s < SUITS.length; s++) {
+    for (n = 1; n <= 10; n++) d.push({ suit:SUITS[s], value:n, type:'number', sortVal:n });
+    for (f = 0; f < FACES.length; f++) d.push({ suit:SUITS[s], value:FACES[f].value, short:FACES[f].short, type:'face', sortVal:FACES[f].sortVal });
+  }
+  for (var i = 0; i < 4; i++) d.push({ suit:null, value:'Impression', type:'wild', sortVal:99 });
+  return d;
+}
+
+function shuffle(arr) {
+  var a = arr.slice(), i, j, t;
+  for (i = a.length-1; i > 0; i--) { j = Math.floor(Math.random()*(i+1)); t=a[i];a[i]=a[j];a[j]=t; }
+  return a;
+}
+
+function suitOrder(c) {
+  var o = ['gold','bronze','brown','blue','green'];
+  if (!c.suit) return 5;
+  var i = o.indexOf(c.suit.id);
+  return i === -1 ? 5 : i;
+}
+
+function sortCards(cards) {
+  return cards.slice().sort(function(a,b) {
+    var sa=suitOrder(a), sb=suitOrder(b);
+    if (sa!==sb) return sa-sb;
+    return a.sortVal-b.sortVal;
+  });
+}
+
+function cardHTML(c, selectable, idx) {
+  var cls = c.type==='wild' ? 'c-wild' : c.suit.cls;
+  var sel = selectable ? ' selectable' : '';
+  var di  = idx !== undefined ? ' data-idx="'+idx+'"' : '';
+  var inner = '';
+  if (c.type==='wild') {
+    inner = '<div class="pcard-val" style="font-size:11px;font-style:italic;">IMP</div><div class="pcard-face">Impression<br>Wildcard</div>';
+  } else if (c.type==='face') {
+    inner = '<div class="pcard-val" style="font-size:12px;">'+c.short+'</div><div class="pcard-face">'+c.suit.label+'<br>'+c.value+'</div>';
+  } else {
+    inner = '<div class="pcard-val">'+c.value+'</div><div class="pcard-suit">'+c.suit.label+'<br>'+c.suit.name+'</div>';
+  }
+  return '<div class="pcard '+cls+sel+'"'+di+'>'+inner+'</div>';
+}
+
+function backCard() {
+  return '<div class="pcard c-back"><div class="pcard-val" style="font-size:18px;">&#9670;</div></div>';
+}
+
+function isSeq(nums, w) {
+  if (nums.length+w < 5) return false;
+  var uniq=[], i, j;
+  for (i=0;i<nums.length;i++) if (uniq.indexOf(nums[i])===-1) uniq.push(nums[i]);
+  uniq.sort(function(a,b){return a-b;});
+  for (i=0;i<uniq.length;i++) {
+    var s=1,g=0,p=uniq[i];
+    for (j=i+1;j<uniq.length&&s+g<5;j++) {
+      if (uniq[j]===p+1){s++;p=uniq[j];}
+      else if (uniq[j]>p+1&&g<w){g++;p++;j--;}
+      else break;
+    }
+    if (s+g>=5) return true;
+  }
+  return false;
+}
+
+function evaluate(hand) {
+  var i,c,k,w=0,nor=[];
+  for (i=0;i<hand.length;i++){if(hand[i].type==='wild')w++;else nor.push(hand[i]);}
+  var sG={},vG={};
+  for (i=0;i<nor.length;i++){
+    c=nor[i];
+    if(c.suit) sG[c.suit.id]=(sG[c.suit.id]||0)+1;
+    if(c.type==='number') vG[c.value]=(vG[c.value]||0)+1;
+  }
+  var sc=[],vc=[];
+  for(k in sG) sc.push(sG[k]);
+  for(k in vG) vc.push(vG[k]);
+  sc.sort(function(a,b){return b-a;}); vc.sort(function(a,b){return b-a;});
+  var ts=(sc[0]||0)+w, t1=(vc[0]||0)+w, t2=vc[1]||0;
+  var sIds=[];
+  for(i=0;i<nor.length;i++) if(nor[i].suit&&sIds.indexOf(nor[i].suit.id)===-1) sIds.push(nor[i].suit.id);
+  var isMating=sIds.length<=2&&t1>=2&&t2>=2;
+  if(isMating) for(i=0;i<sIds.length;i++) if(sIds[i]!=='gold'&&sIds[i]!=='bronze'){isMating=false;break;}
+  var nums=[];
+  for(i=0;i<nor.length;i++) if(nor[i].type==='number') nums.push(nor[i].value);
+  nums.sort(function(a,b){return a-b;});
+  if(ts>=5)             return {name:'Full Flight',   rank:'Rank 1 - highest hand',desc:'Five cards, all one suit'};
+  if(t1>=4)             return {name:'A Wing',        rank:'Rank 4',desc:'Four of a kind'};
+  if(t1>=3&&t2>=2)      return {name:'The Weyr',      rank:'Rank 3',desc:'Three of a kind and a pair'};
+  if(isSeq(nums,w))     return {name:'Threadfall',    rank:'Rank 2',desc:'Five sequential cards, any suits'};
+  if(isMating)          return {name:'Mating Flight', rank:'Rank 5',desc:'Two pairs in Gold and Bronze'};
+  if(t1>=2&&t2>=2)      return {name:'Double Pair',   rank:'Rank 6',desc:'Any two pairs'};
+  if(t1>=2)             return {name:'The Rider',     rank:'Rank 7',desc:'One pair'};
+  return                       {name:'High Card',     rank:'Rank 8 - lowest hand',desc:'Highest single card wins'};
+}
+
+function getSpecialNotes(hand) {
+  var wilds=[],faces=[],notes=[],i,f;
+  for(i=0;i<hand.length;i++){
+    if(hand[i].type==='wild') wilds.push(hand[i]);
+    if(hand[i].type==='face') faces.push(hand[i]);
+  }
+  if(wilds.length) notes.push('<i class="ti ti-egg"></i> '+wilds.length+' Impression Wildcard'+(wilds.length>1?'s':'')+' - announce "Hatching!" and declare any suit and value.');
+  for(i=0;i<faces.length;i++){
+    f=faces[i];
+    if(f.value==='Weyrwoman')  notes.push('<i class="ti ti-crown"></i> Weyrwoman ('+f.suit.name+') - declare as any '+f.suit.name+' value.');
+    if(f.value==='Weyrleader') notes.push('<i class="ti ti-sword"></i> Weyrleader ('+f.suit.name+') - declare as any '+f.suit.name+' value.');
+    if(f.value==='Weyrsecond') notes.push('<i class="ti ti-arrows-exchange"></i> Weyrsecond ('+f.suit.name+') - force an opponent to swap a card.');
+  }
+  return notes;
+}
+
+// ── STATE ──
+var myId        = 'p_' + Math.random().toString(36).slice(2,10);
+var myName      = '';
+var roomCode    = '';
+var isHost      = false;
+var myHand      = [];
+var hgCards_    = [];
+var remaining_  = [];
+var pendingDraw = null;
+var roomRef     = null;
+var gamePhase   = 'waiting'; // waiting | dealt | hg_revealed | all_revealed | clutch_revealed
+
+// ── HELPERS ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+
+function genCode() {
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  var code = '';
+  for (var i = 0; i < 4; i++) code += chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+
+function showError(id, msg) {
+  var el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// ── SERIALIZE / DESERIALIZE CARDS ──
+// Firebase can't store complex objects cleanly so we flatten cards to strings
+// Format: "number:gold:7" | "face:bronze:Weyrwoman:WW" | "wild"
+function serializeCard(c) {
+  if (c.type==='wild') return 'wild';
+  if (c.type==='face') return 'face:'+c.suit.id+':'+c.value+':'+c.short;
+  return 'number:'+c.suit.id+':'+c.value;
+}
+
+function deserializeCard(s) {
+  if (s==='wild') return {suit:null,value:'Impression',type:'wild',sortVal:99};
+  var parts = s.split(':');
+  var suit = SUITS.filter(function(x){return x.id===parts[1];})[0];
+  if (parts[0]==='face') {
+    var face = FACES.filter(function(x){return x.value===parts[2];})[0];
+    return {suit:suit,value:face.value,short:face.short,type:'face',sortVal:face.sortVal};
+  }
+  var n = parseInt(parts[2],10);
+  return {suit:suit,value:n,type:'number',sortVal:n};
+}
+
+function serializeDeck(cards) { return cards.map(serializeCard); }
+function deserializeDeck(arr)  { return arr.map(deserializeCard); }
+
+// ── RENDER HAND ──
+function renderMyHand(selectable) {
+  var ev = evaluate(myHand);
+  document.getElementById('myHandName').textContent = ev.name;
+  document.getElementById('myHandRank').textContent = ev.rank + ' - ' + ev.desc;
+  var html='', i;
+  for(i=0;i<myHand.length;i++) html += cardHTML(myHand[i], selectable, i);
+  document.getElementById('myCards').innerHTML = html;
+  var notes = getSpecialNotes(myHand);
+  var sw = document.getElementById('mySpecials');
+  if (notes.length) {
+    var h = '<div class="hdivider"></div>';
+    for(i=0;i<notes.length;i++) h += '<div class="special-note">'+notes[i]+'</div>';
+    sw.innerHTML = h;
+  } else { sw.innerHTML = ''; }
+  if (selectable) {
+    var cards = document.getElementById('myCards').querySelectorAll('.selectable');
+    for(i=0;i<cards.length;i++) cards[i].addEventListener('click', onSelectCard);
+  }
+}
+
+function onSelectCard(e) {
+  var idx = parseInt(e.currentTarget.getAttribute('data-idx'),10);
+  if (isNaN(idx)||!pendingDraw) return;
+  myHand[idx] = pendingDraw;
+  pendingDraw = null;
+  // Save updated hand to Firebase
+  roomRef.child('hands/'+myId).set(serializeDeck(myHand));
+  renderMyHand(false);
+  document.getElementById('panelDraw').style.display = 'none';
+  document.getElementById('btnDrawCard').disabled = false;
+  toast('Card swapped!');
+}
+
+// ── CREATE GAME ──
+document.getElementById('btnCreate').addEventListener('click', function() {
+  myName = document.getElementById('playerName').value.trim();
+  if (!myName) { showError('lobbyError','Please enter your name.'); return; }
+  showError('lobbyError','');
+  var code = genCode();
+  roomCode = code;
+  isHost   = true;
+  roomRef  = db.ref('rooms/'+code);
+  roomRef.set({
+    phase:   'waiting',
+    host:    myId,
+    players: { [myId]: { name:myName, ready:false } }
+  }).then(function(){
+    document.getElementById('displayRoomCode').textContent = code;
+    document.getElementById('gameRoomPill').textContent = 'Room: '+code;
+    listenRoom();
+    showScreen('screenWaiting');
+  });
+});
+
+// ── JOIN GAME ──
+document.getElementById('btnJoin').addEventListener('click', function() {
+  myName = document.getElementById('playerName').value.trim();
+  var code = document.getElementById('joinCode').value.trim().toUpperCase();
+  if (!myName) { showError('lobbyError','Please enter your name.'); return; }
+  if (code.length !== 4) { showError('lobbyError','Please enter a 4-letter room code.'); return; }
+  showError('lobbyError','');
+  db.ref('rooms/'+code).once('value').then(function(snap){
+    if (!snap.exists()) { showError('lobbyError','Room not found. Check the code and try again.'); return; }
+    var data = snap.val();
+    if (data.phase !== 'waiting') { showError('lobbyError','That game has already started.'); return; }
+    roomCode = code;
+    isHost   = false;
+    roomRef  = db.ref('rooms/'+code);
+    roomRef.child('players/'+myId).set({ name:myName, ready:false }).then(function(){
+      document.getElementById('displayRoomCode').textContent = code;
+      document.getElementById('gameRoomPill').textContent = 'Room: '+code;
+      listenRoom();
+      showScreen('screenWaiting');
+    });
+  });
+});
+
+// ── LEAVE WAITING ──
+document.getElementById('btnLeaveWaiting').addEventListener('click', leaveGame);
+document.getElementById('btnLeaveGame').addEventListener('click', leaveGame);
+
+function leaveGame() {
+  if (roomRef) roomRef.child('players/'+myId).remove();
+  roomRef = null; roomCode = ''; isHost = false; myHand = []; gamePhase = 'waiting';
+  showScreen('screenLobby');
+}
+
+// ── DEAL ──
+document.getElementById('btnDeal').addEventListener('click', function() {
+  if (!isHost) return;
+  var deck = shuffle(buildDeck());
+  var players = Object.keys(window._currentPlayers || {});
+  var hands = {}, i, s = 0;
+  for (i = 0; i < players.length; i++) {
+    hands[players[i]] = serializeDeck(sortCards(deck.slice(s, s+7)));
+    s += 7;
+  }
+  var hg  = serializeDeck(sortCards(deck.slice(s, s+3)));
+  var rem = serializeDeck(deck.slice(s+3));
+  roomRef.update({
+    phase:     'dealt',
+    hands:     hands,
+    hg:        hg,
+    remaining: rem,
+    revealed:  null,
+    clutch:    null
+  });
+});
+
+// ── REVEAL HG (host only) ──
+document.getElementById('btnRevealHG').addEventListener('click', function() {
+  if (!isHost) return;
+  roomRef.child('phase').set('hg_revealed');
+});
+
+// ── DRAW CARD ──
+document.getElementById('btnDrawCard').addEventListener('click', function() {
+  roomRef.child('remaining').once('value').then(function(snap){
+    var rem = snap.val();
+    if (!rem || rem.length === 0) { toast('The deck is empty!'); return; }
+    // Skip the first card (reserved as clutch)
+    if (rem.length < 2) { toast('Only the clutch card remains!'); return; }
+    var drawn = deserializeCard(rem[1]);
+    var newRem = rem.slice(2); // remove drawn and keep rest
+    // put drawn[0] back as clutch placeholder
+    newRem.unshift(rem[0]);
+    roomRef.child('remaining').set(newRem);
+    pendingDraw = drawn;
+    document.getElementById('drawnCard').innerHTML = cardHTML(drawn, false);
+    document.getElementById('drawPrompt').textContent = 'Select a card from your hand to replace it.';
+    document.getElementById('panelDraw').style.display = 'block';
+    document.getElementById('btnDrawCard').disabled = true;
+    renderMyHand(true);
+  });
+});
+
+// ── REVEAL MY HAND ──
+document.getElementById('btnRevealHand').addEventListener('click', function() {
+  roomRef.child('revealed/'+myId).set(serializeDeck(myHand)).then(function(){
+    document.getElementById('btnRevealHand').disabled = true;
+    toast('Your hand has been revealed!');
+  });
+});
+
+// ── REVEAL CLUTCH (host only) ──
+document.getElementById('btnRevealClutch').addEventListener('click', function() {
+  if (!isHost) return;
+  roomRef.child('remaining').once('value').then(function(snap){
+    var rem = snap.val();
+    if (!rem || rem.length === 0) { toast('No clutch card available!'); return; }
+    var clutch = rem[0];
+    roomRef.update({ phase:'clutch_revealed', clutch: clutch });
+  });
+});
+
+// ── NEW ROUND ──
+document.getElementById('btnNewGame').addEventListener('click', function() {
+  if (!isHost) return;
+  roomRef.update({ phase:'waiting', hands:null, hg:null, remaining:null, revealed:null, clutch:null });
+  myHand = []; hgCards_ = []; remaining_ = []; pendingDraw = null;
+});
+
+// ── LISTEN TO ROOM ──
+function listenRoom() {
+  roomRef.on('value', function(snap) {
+    if (!snap.exists()) { leaveGame(); return; }
+    var data = snap.val();
+    gamePhase = data.phase || 'waiting';
+    var players = data.players || {};
+    window._currentPlayers = players;
+
+    // ── WAITING SCREEN ──
+    if (gamePhase === 'waiting') {
+      updateWaitingList(players, data.host);
+      // Reset game state
+      myHand = []; hgCards_ = []; pendingDraw = null;
+      if (snap.child('screenGame').exists || document.getElementById('screenGame').classList.contains('active')) {
+        showScreen('screenWaiting');
+      }
+      return;
+    }
+
+    // ── GAME SCREENS ──
+    showScreen('screenGame');
+
+    // Update player list in game
+    updateGamePlayers(players, data.revealed || {});
+
+    // Load my hand if just dealt
+    if (data.hands && data.hands[myId] && myHand.length === 0) {
+      myHand = deserializeDeck(data.hands[myId]);
+      document.getElementById('panelHand').style.display = 'block';
+      document.getElementById('panelActions').style.display = 'block';
+      renderMyHand(false);
+    }
+
+    // HG revealed
+    if ((gamePhase === 'hg_revealed' || gamePhase === 'all_revealed' || gamePhase === 'clutch_revealed') && data.hg) {
+      hgCards_ = deserializeDeck(data.hg);
+      var hgHTML = '';
+      for (var i = 0; i < hgCards_.length; i++) hgHTML += cardHTML(hgCards_[i], false);
+      document.getElementById('hgCards').innerHTML = hgHTML;
+      document.getElementById('panelHG').style.display = 'block';
+    }
+
+    // Show/hide buttons based on role and phase
+    document.getElementById('btnRevealHG').style.display    = (isHost && gamePhase === 'dealt') ? 'inline-block' : 'none';
+    document.getElementById('btnRevealClutch').style.display = (isHost && gamePhase === 'all_revealed') ? 'inline-block' : 'none';
+    document.getElementById('btnNewGame').style.display      = (isHost && gamePhase === 'clutch_revealed') ? 'inline-block' : 'none';
+
+    // All revealed check
+    var revealed = data.revealed || {};
+    var pIds = Object.keys(players);
+    var allRevealed = pIds.length > 0 && pIds.every(function(pid){ return !!revealed[pid]; });
+    if (allRevealed && gamePhase === 'hg_revealed') {
+      roomRef.child('phase').set('all_revealed');
+    }
+
+    // Show reveal panel
+    if ((gamePhase === 'all_revealed' || gamePhase === 'clutch_revealed') && Object.keys(revealed).length > 0) {
+      var revHTML = '';
+      pIds.forEach(function(pid) {
+        if (!revealed[pid]) return;
+        var pname = players[pid] ? players[pid].name : pid;
+        var phand = deserializeDeck(revealed[pid]);
+        var ev = evaluate(phand);
+        revHTML += '<div class="reveal-player">';
+        revHTML += '<div class="reveal-player-name">'+escHtml(pname)+'</div>';
+        revHTML += '<div class="reveal-hand-name">'+ev.name+'</div>';
+        revHTML += '<div class="reveal-hand-rank">'+ev.rank+' - '+ev.desc+'</div>';
+        revHTML += '<div class="cards-row" style="margin-top:8px;">';
+        for (var i = 0; i < phand.length; i++) revHTML += cardHTML(phand[i], false);
+        revHTML += '</div></div>';
+      });
+      document.getElementById('revealList').innerHTML = revHTML;
+      document.getElementById('panelReveal').style.display = 'block';
+    }
+
+    // Clutch card
+    if (gamePhase === 'clutch_revealed' && data.clutch) {
+      var clutch = deserializeCard(data.clutch);
+      renderClutch(clutch, revealed, players);
+    }
+  });
+
+  // Waiting room player list
+  roomRef.child('players').on('value', function(snap) {
+    if (gamePhase === 'waiting') {
+      updateWaitingList(snap.val() || {}, null);
+    }
+  });
+}
+
+function updateWaitingList(players, hostId) {
+  var pIds = Object.keys(players);
+  var html = '';
+  pIds.forEach(function(pid) {
+    var isH = pid === hostId || pid === myId && isHost;
+    html += '<li class="'+(isH?'host-tag':'')+'"><i class="ti ti-user"></i>'+escHtml(players[pid].name)+'</li>';
+  });
+  document.getElementById('waitingPlayerList').innerHTML = html;
+  var count = pIds.length;
+  var status = document.getElementById('waitingStatus');
+  if (count < 2) {
+    status.innerHTML = '<i class="ti ti-hourglass"></i><span>Waiting for at least one more player...</span>';
+    document.getElementById('btnDeal').disabled = true;
+  } else {
+    status.innerHTML = '<i class="ti ti-check"></i><span>'+count+' players ready. Host can deal!</span>';
+    document.getElementById('btnDeal').disabled = !isHost;
+  }
+}
+
+function updateGamePlayers(players, revealed) {
+  var html = '';
+  Object.keys(players).forEach(function(pid) {
+    var hasRevealed = !!revealed[pid];
+    var isMe = pid === myId;
+    html += '<li>';
+    html += '<i class="ti ti-'+(isMe?'user-check':'user')+'"></i>';
+    html += escHtml(players[pid].name) + (isMe ? ' <em style="font-size:11px;color:var(--faded);">(you)</em>' : '');
+    html += '<div class="ready-dot'+(hasRevealed?' on':'')+'"></div>';
+    html += '</li>';
+  });
+  document.getElementById('gamePlayers').innerHTML = html;
+}
+
+function renderClutch(clutch, revealed, players) {
+  var cel = document.getElementById('clutchCard');
+  cel.className = 'pcard '+(clutch.type==='wild'?'c-wild':clutch.suit.cls);
+  if (clutch.type==='wild') {
+    cel.innerHTML = '<div class="pcard-val" style="font-size:11px;font-style:italic;">IMP</div><div class="pcard-face">Impression<br>Wildcard</div>';
+    document.getElementById('clutchCardName').textContent = 'Impression Wildcard';
+    document.getElementById('clutchCardSub').textContent  = 'The rarest card in the deck';
+    var oc = document.getElementById('clutchOutcome');
+    oc.className = 'outcome outcome-goldflight';
+    oc.innerHTML = '<span class="outcome-label">Gold Flight</span>The pot rolls over entirely to the next game.';
+  } else {
+    if (clutch.type==='face') {
+      cel.innerHTML = '<div class="pcard-val" style="font-size:12px;">'+clutch.short+'</div><div class="pcard-face">'+clutch.suit.label+'<br>'+clutch.value+'</div>';
+      document.getElementById('clutchCardName').textContent = clutch.value;
+      document.getElementById('clutchCardSub').textContent  = clutch.suit.name+' face card';
+    } else {
+      cel.innerHTML = '<div class="pcard-val">'+clutch.value+'</div><div class="pcard-suit">'+clutch.suit.label+'<br>'+clutch.suit.name+'</div>';
+      document.getElementById('clutchCardName').textContent = clutch.value+' of '+clutch.suit.name;
+      document.getElementById('clutchCardSub').textContent  = clutch.suit.name+' suit, value '+clutch.value;
+    }
+    // Check against all revealed hands
+    var matchPlayer = null, matchType = null;
+    Object.keys(revealed).forEach(function(pid) {
+      var phand = deserializeDeck(revealed[pid]);
+      var hSuits = [], hVals = [];
+      phand.forEach(function(c){ if(c.suit) hSuits.push(c.suit.id); if(c.type==='number') hVals.push(c.value); });
+      if (hSuits.indexOf(clutch.suit.id) !== -1) { matchPlayer = players[pid]?players[pid].name:pid; matchType='suit'; }
+      else if (clutch.type==='number' && hVals.indexOf(clutch.value) !== -1 && !matchPlayer) { matchPlayer = players[pid]?players[pid].name:pid; matchType='value'; }
+    });
+    var oc = document.getElementById('clutchOutcome');
+    if (matchType==='suit') {
+      oc.className = 'outcome outcome-double';
+      oc.innerHTML = '<span class="outcome-label">Suit match - double pot</span>Matches '+escHtml(matchPlayer)+'\'s suit. The pot is doubled!';
+    } else if (matchType==='value') {
+      oc.className = 'outcome outcome-challenge';
+      oc.innerHTML = '<span class="outcome-label">Value match - challenge</span>Matches a card in '+escHtml(matchPlayer)+'\'s hand. Second place may challenge!';
+    } else {
+      oc.className = 'outcome outcome-none';
+      oc.innerHTML = '<span class="outcome-label">No match</span>No effect. The winner takes the pot as declared.';
+    }
+  }
+  document.getElementById('panelClutch').style.display = 'block';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── CLEANUP ON LEAVE ──
+window.addEventListener('beforeunload', function() {
+  if (roomRef) roomRef.child('players/'+myId).remove();
+});
+</script>
+</body>
+</html>
