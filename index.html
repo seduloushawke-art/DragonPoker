@@ -496,6 +496,33 @@ function evaluate(hand) {
   return                       {name:'High Card',     rank:'Rank 8 - lowest hand',desc:'Highest single card wins'};
 }
 
+
+// ── BEST HAND FROM 10 CARDS ──
+function combinations(arr, k) {
+  var result = [], i, j, combo, rest;
+  if (k === 1) { for (i=0;i<arr.length;i++) result.push([arr[i]]); return result; }
+  for (i=0;i<arr.length-k+1;i++) {
+    rest = combinations(arr.slice(i+1), k-1);
+    for (j=0;j<rest.length;j++) { combo=[arr[i]].concat(rest[j]); result.push(combo); }
+  }
+  return result;
+}
+
+function bestHandFrom10(hand, hg) {
+  if (!hg || hg.length === 0) return evaluate(hand);
+  var all = hand.concat(hg);
+  var combos = combinations(all, 5);
+  var best = null, bestRankIdx = 999;
+  var rankOrder = ['Full Flight','Threadfall','The Weyr','A Wing','Mating Flight','Double Pair','The Rider','High Card'];
+  for (var i=0;i<combos.length;i++) {
+    var ev = evaluate(combos[i]);
+    var idx = rankOrder.indexOf(ev.name);
+    if (idx === -1) idx = rankOrder.length;
+    if (best === null || idx < bestRankIdx) { best = ev; bestRankIdx = idx; }
+  }
+  return best || evaluate(hand);
+}
+
 function getSpecialNotes(hand) {
   var wilds=[],faces=[],notes=[],i,f;
   for(i=0;i<hand.length;i++){
@@ -576,9 +603,9 @@ function deserializeDeck(arr)  { return arr.map(deserializeCard); }
 
 // ── RENDER HAND ──
 function renderMyHand(selectable) {
-  var ev = evaluate(myHand);
-  document.getElementById('myHandName').textContent = ev.name;
-  document.getElementById('myHandRank').textContent = ev.rank + ' - ' + ev.desc;
+  var ev = (hgCards_ && hgCards_.length > 0) ? bestHandFrom10(myHand, hgCards_) : evaluate(myHand);
+  document.getElementById('myHandName').textContent = ev.name + (hgCards_ && hgCards_.length > 0 ? ' ★' : '');
+  document.getElementById('myHandRank').textContent = ev.rank + ' - ' + ev.desc + (hgCards_ && hgCards_.length > 0 ? ' (inc. Hatching Ground)' : '');
   var html='', i;
   for(i=0;i<myHand.length;i++) html += cardHTML(myHand[i], selectable, i);
   document.getElementById('myCards').innerHTML = html;
@@ -778,6 +805,7 @@ function listenRoom() {
       for (var i = 0; i < hgCards_.length; i++) hgHTML += cardHTML(hgCards_[i], false);
       document.getElementById('hgCards').innerHTML = hgHTML;
       document.getElementById('panelHG').style.display = 'block';
+      if (myHand.length > 0) renderMyHand(false);
     }
 
     // Show/hide buttons based on role and phase
@@ -800,11 +828,11 @@ function listenRoom() {
         if (!revealed[pid]) return;
         var pname = players[pid] ? players[pid].name : pid;
         var phand = deserializeDeck(revealed[pid]);
-        var ev = evaluate(phand);
+        var ev = (hgCards_ && hgCards_.length > 0) ? bestHandFrom10(phand, hgCards_) : evaluate(phand);
         revHTML += '<div class="reveal-player">';
         revHTML += '<div class="reveal-player-name">'+escHtml(pname)+'</div>';
         revHTML += '<div class="reveal-hand-name">'+ev.name+'</div>';
-        revHTML += '<div class="reveal-hand-rank">'+ev.rank+' - '+ev.desc+'</div>';
+        revHTML += '<div class="reveal-hand-rank">'+ev.rank+' - '+ev.desc+(hgCards_&&hgCards_.length>0?' (inc. Hatching Ground)':'')+'</div>';
         revHTML += '<div class="cards-row" style="margin-top:8px;">';
         for (var i = 0; i < phand.length; i++) revHTML += cardHTML(phand[i], false);
         revHTML += '</div></div>';
