@@ -355,7 +355,6 @@
       <div class="slabel">Actions</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
         <button class="btn" id="btnDrawCard" style="flex:1;min-width:140px;"><i class="ti ti-plus" style="margin-right:6px;"></i>Draw single card</button>
-        <button class="btn" id="btnRevealHG" style="flex:1;min-width:140px;display:none;"><i class="ti ti-layout-grid" style="margin-right:6px;"></i>Reveal Hatching Ground</button>
         <button class="btn gold" id="btnRevealHand" style="flex:1;min-width:140px;"><i class="ti ti-eye" style="margin-right:6px;"></i>Reveal my hand</button>
         <button class="btn" id="btnRevealClutch" style="flex:1;min-width:140px;display:none;"><i class="ti ti-eye-off" style="margin-right:6px;"></i>Reveal clutch card</button>
         <button class="btn" id="btnNewGame" style="flex:1;min-width:140px;display:none;"><i class="ti ti-refresh" style="margin-right:6px;"></i>New round</button>
@@ -702,19 +701,13 @@ document.getElementById('btnDeal').addEventListener('click', function() {
   var hg  = serializeDeck(sortCards(deck.slice(s, s+3)));
   var rem = serializeDeck(deck.slice(s+3));
   roomRef.update({
-    phase:     'dealt',
+    phase:     'hg_revealed',
     hands:     hands,
     hg:        hg,
     remaining: rem,
     revealed:  null,
     clutch:    null
   });
-});
-
-// ── REVEAL HG (host only) ──
-document.getElementById('btnRevealHG').addEventListener('click', function() {
-  if (!isHost) return;
-  roomRef.child('phase').set('hg_revealed');
 });
 
 // ── DRAW CARD ──
@@ -809,15 +802,17 @@ function listenRoom() {
     }
 
     // Show/hide buttons based on role and phase
-    document.getElementById('btnRevealHG').style.display    = (isHost && gamePhase === 'dealt') ? 'inline-block' : 'none';
     document.getElementById('btnRevealClutch').style.display = (isHost && gamePhase === 'all_revealed') ? 'inline-block' : 'none';
     document.getElementById('btnNewGame').style.display      = (isHost && gamePhase === 'clutch_revealed') ? 'inline-block' : 'none';
+    // Reveal hand button: disabled only if this player has already revealed
+    var myRevealed = data.revealed && data.revealed[myId];
+    document.getElementById('btnRevealHand').disabled = !!myRevealed;
 
     // All revealed check
     var revealed = data.revealed || {};
     var pIds = Object.keys(players);
     var allRevealed = pIds.length > 0 && pIds.every(function(pid){ return !!revealed[pid]; });
-    if (allRevealed && gamePhase === 'hg_revealed') {
+    if (allRevealed && (gamePhase === 'hg_revealed' || gamePhase === 'dealt')) {
       roomRef.child('phase').set('all_revealed');
     }
 
