@@ -784,11 +784,17 @@ function listenRoom() {
     updateGamePlayers(players, data.revealed || {});
 
     // Load my hand if just dealt
-    if (data.hands && data.hands[myId] && myHand.length === 0) {
-      myHand = deserializeDeck(data.hands[myId]);
+    if (data.hands && data.hands[myId]) {
+      var freshHand = deserializeDeck(data.hands[myId]);
+      // Only replace hand from DB if we haven't modified it locally (i.e. no swaps in progress)
+      if (myHand.length === 0) {
+        myHand = freshHand;
+      }
       document.getElementById('panelHand').style.display = 'block';
       document.getElementById('panelActions').style.display = 'block';
-      renderMyHand(false);
+      renderMyHand(pendingDraw ? true : false);
+      // Ensure draw button is enabled when hand first appears
+      if (!pendingDraw) document.getElementById('btnDrawCard').disabled = false;
     }
 
     // HG revealed
@@ -801,20 +807,22 @@ function listenRoom() {
       if (myHand.length > 0) renderMyHand(false);
     }
 
-    // Show/hide buttons based on role and phase
-    document.getElementById('btnRevealClutch').style.display = (isHost && gamePhase === 'all_revealed') ? 'inline-block' : 'none';
-    document.getElementById('btnNewGame').style.display      = (isHost && gamePhase === 'clutch_revealed') ? 'inline-block' : 'none';
-    // Reveal hand button: disabled only if this player has already revealed
-    var myRevealed = data.revealed && data.revealed[myId];
-    document.getElementById('btnRevealHand').disabled = !!myRevealed;
-
-    // All revealed check
+    // All revealed check (must run before show/hide so we can use allRevealed in button logic)
     var revealed = data.revealed || {};
     var pIds = Object.keys(players);
     var allRevealed = pIds.length > 0 && pIds.every(function(pid){ return !!revealed[pid]; });
     if (allRevealed && (gamePhase === 'hg_revealed' || gamePhase === 'dealt')) {
       roomRef.child('phase').set('all_revealed');
     }
+
+    // Show/hide buttons based on role and phase
+    var showClutch = isHost && (gamePhase === 'all_revealed' || (allRevealed && gamePhase === 'hg_revealed'));
+    document.getElementById('btnRevealClutch').style.display = showClutch ? 'inline-block' : 'none';
+    document.getElementById('btnNewGame').style.display      = (isHost && gamePhase === 'clutch_revealed') ? 'inline-block' : 'none';
+    // Reveal hand button: disabled only if this player has already revealed
+    var myRevealed = data.revealed && data.revealed[myId];
+    document.getElementById('btnRevealHand').disabled = !!myRevealed;
+    document.getElementById('btnRevealHand').style.display = (gamePhase === 'all_revealed' || gamePhase === 'clutch_revealed') ? 'none' : 'inline-block';
 
     // Show reveal panel
     if ((gamePhase === 'all_revealed' || gamePhase === 'clutch_revealed') && Object.keys(revealed).length > 0) {
