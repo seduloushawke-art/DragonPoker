@@ -771,9 +771,20 @@ function listenRoom() {
       updateWaitingList(players, data.host);
       // Reset game state
       myHand = []; hgCards_ = []; pendingDraw = null;
-      if (snap.child('screenGame').exists || document.getElementById('screenGame').classList.contains('active')) {
-        showScreen('screenWaiting');
-      }
+      // Clear all game panels for next round
+      document.getElementById('panelHand').style.display    = 'none';
+      document.getElementById('panelActions').style.display = 'none';
+      document.getElementById('panelHG').style.display      = 'none';
+      document.getElementById('panelReveal').style.display  = 'none';
+      document.getElementById('panelClutch').style.display  = 'none';
+      document.getElementById('panelDraw').style.display    = 'none';
+      document.getElementById('revealList').innerHTML       = '';
+      document.getElementById('hgCards').innerHTML          = '';
+      document.getElementById('myCards').innerHTML          = '';
+      document.getElementById('mySpecials').innerHTML       = '';
+      document.getElementById('drawnCard').innerHTML        = '';
+      document.getElementById('drawPrompt').textContent     = '';
+      showScreen('screenWaiting');
       return;
     }
 
