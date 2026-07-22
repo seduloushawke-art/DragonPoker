@@ -538,7 +538,7 @@ function getSpecialNotes(hand) {
     if(hand[i].type==='wild') wilds.push(hand[i]);
     if(hand[i].type==='face') faces.push(hand[i]);
   }
-  if(wilds.length) notes.push('<i class="ti ti-egg"></i> '+wilds.length+' Impression Wildcard'+(wilds.length>1?'s':'')+' - announce "Hatching!" and declare any suit and value.');
+  if(wilds.length) notes.push('<i class="ti ti-egg"></i> '+wilds.length+' Impression Wildcard'+(wilds.length>1?'s':'')+' - Declare any suit and value.');
   for(i=0;i<faces.length;i++){
     f=faces[i];
     if(f.value==='Weyrwoman')  notes.push('<i class="ti ti-crown"></i> Weyrwoman ('+f.suit.name+') - declare as any '+f.suit.name+' value.');
