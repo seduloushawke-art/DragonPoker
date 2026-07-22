@@ -102,6 +102,14 @@
   .btn-row { display: flex; gap: 8px; }
   .btn-row .btn { margin-bottom: 0; }
 
+  /* Rules link styled as a button */
+  a.btn {
+    display: block;
+    text-decoration: none;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
   /* ── ROOM CODE ── */
   .room-code-display {
     text-align: center; padding: 1.5rem;
@@ -260,6 +268,8 @@
       <input type="text" id="joinCode" placeholder="4-letter code..." maxlength="4" style="text-transform:uppercase;letter-spacing:0.2em;font-family:'Cinzel',serif;font-size:20px;">
     </div>
     <button class="btn" id="btnJoin"><i class="ti ti-door-enter" style="margin-right:6px;"></i>Join game</button>
+
+    <a class="btn" href="https://seduloushawke-art.github.io/DragonPokerRules/" target="_blank" rel="noopener noreferrer"><i class="ti ti-book" style="margin-right:6px;"></i>Rules</a>
 
     <div id="lobbyError" style="font-size:12px;color:#8B2020;font-style:italic;margin-top:8px;display:none;"></div>
   </div>
