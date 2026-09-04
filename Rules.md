@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 
+layout: page
+title: "Rules"
+permalink: /Rules
+
 <style>* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body { background: #2A1F0E; }
